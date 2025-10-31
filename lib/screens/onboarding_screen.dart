@@ -37,7 +37,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _pageController = PageController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      precacheImage(const AssetImage("assets/onboarding_control.png"), context);
+      precacheImage(const AssetImage("assets/security1.png"), context);
     });
 
     _pageController.addListener(() {
@@ -136,16 +136,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
 
             const SizedBox(height: 20),
-
-            // 🔘 Dot Indicator
             DotIndicator(
               currentIndex: _currentPage,
               dotCount: _onboardingData.length,
             ),
 
             const SizedBox(height: 20),
-
-            // 🟢 Tombol hanya muncul di halaman terakhir (index 1)
             AnimatedSlide(
               duration: const Duration(milliseconds: 500),
               curve: Curves.easeInOut,
