@@ -1,72 +1,31 @@
 import 'package:flutter/material.dart';
 import '../themes/color.dart';
-import '../components/custom_alert.dart';
-import '../components/card.dart';
+import '../components/card.dart'; // Pastikan ini mengarah ke VehicleCard yang baru
+import '../services/api_service.dart'; // File service API yang tadi dibuat
+import '../models/vehicle_model.dart'; // File model yang tadi dibuat
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  final List<Map<String, dynamic>> _alertLogs = const [
-    {
-      "time": "Baru Saja",
-      "plate": "B 1234 XYZ",
-      "status": "Ditolak",
-      "reason": "Wajah Tidak Cocok",
-      "location": "Gate Utama",
-      "isUrgent": true,
-    },
-    {
-      "time": "10:42 WIB",
-      "plate": "DK 5678 AB",
-      "status": "Ditolak",
-      "reason": "Plat Tidak Terdaftar",
-      "location": "Gate Utama",
-      "isUrgent": true,
-    },
-    {
-      "time": "09:15 WIB",
-      "plate": "L 9988 OP",
-      "status": "Ditolak",
-      "reason": "Wajah Tidak Terdeteksi",
-      "location": "Gate Samping",
-      "isUrgent": false,
-    },
-    {
-      "time": "Kemarin, 18:00",
-      "plate": "B 4455 JK",
-      "status": "Ditolak",
-      "reason": "Wajah Tidak Cocok",
-      "location": "Gate Utama",
-      "isUrgent": false,
-    },
-  ];
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
 
-  void _showQuickActionAlert(BuildContext context, String plate) {
-    ElegantAlertDialog.show(
-      context,
-      title: "Buka Gate Manual?",
-      content: "Anda akan membuka gate untuk kendaraan $plate secara manual.",
-      confirmText: "YA, BUKA",
-      onConfirm: () {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Gate dibuka manual untuk $plate",
-              style: const TextStyle(color: AppColors.softWhite),
-            ),
-            backgroundColor: AppColors.neonGreen,
-          ),
-        );
-      },
-      cancelText: "ABAIKAN",
-      onCancel: () {
-        Navigator.of(context).pop();
-      },
-      icon: Icons.warning_amber_rounded,
-      iconColor: AppColors.crimson,
-      isDestructive: true,
-    );
+class _HomePageState extends State<HomePage> {
+  // Variabel untuk menampung Future data
+  late Future<List<VehicleModel>> _vehicleFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  // Fungsi untuk memuat/refresh data
+  void _loadData() {
+    setState(() {
+      _vehicleFuture = getVehicleHistory();
+    });
   }
 
   @override
@@ -87,36 +46,109 @@ class HomePage extends StatelessWidget {
         backgroundColor: AppColors.charcoal,
         elevation: 0,
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              color: AppColors.softWhite,
-            ),
-          ),
+          // Tombol Refresh Manual (Opsional)
           const SizedBox(width: 8),
         ],
       ),
-      body: ListView.builder(
-        padding: EdgeInsets.fromLTRB(20, 10, 20, bottomPadding),
-        itemCount: _alertLogs.length,
-        itemBuilder: (context, index) {
-          final log = _alertLogs[index];
 
-          // 🔥 PANGGIL KOMPONEN ALERT CARD DI SINI
-          return AlertCard(
-            plate: log['plate'],
-            time: log['time'],
-            location: log['location'],
-            reason: log['reason'],
-            isUrgent: log['isUrgent'],
-            // Hanya kirim fungsi jika Urgent
-            onOpenGate:
-                log['isUrgent']
-                    ? () => _showQuickActionAlert(context, log['plate'])
-                    : null,
-          );
+      // RefreshIndicator: Tarik layar ke bawah untuk update data
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _loadData();
+          // Tunggu sebentar agar loading indicator terasa (UX)
+          await Future.delayed(const Duration(seconds: 1));
         },
+        color: AppColors.neonGreen,
+        backgroundColor: AppColors.deepBlue,
+
+        child: FutureBuilder<List<VehicleModel>>(
+          future: _vehicleFuture,
+          builder: (context, snapshot) {
+            // 1. KONDISI LOADING
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.neonGreen),
+              );
+            }
+
+            // 2. KONDISI ERROR
+            if (snapshot.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: AppColors.crimson,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Gagal memuat data",
+                      style: TextStyle(
+                        color: AppColors.softWhite.withOpacity(0.7),
+                      ),
+                    ),
+                    Text(
+                      "${snapshot.error}", // Tampilkan pesan error teknis (opsional)
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _loadData,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.deepBlue,
+                      ),
+                      child: const Text("Coba Lagi"),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // 3. KONDISI DATA KOSONG
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.garage_outlined,
+                      color: AppColors.softWhite.withOpacity(0.3),
+                      size: 64,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Belum ada kendaraan lewat",
+                      style: TextStyle(
+                        color: AppColors.softWhite.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // 4. KONDISI SUKSES (ADA DATA)
+            final vehicles = snapshot.data!;
+
+            return ListView.builder(
+              padding: EdgeInsets.fromLTRB(20, 10, 20, bottomPadding),
+              itemCount: vehicles.length,
+              itemBuilder: (context, index) {
+                final data = vehicles[index];
+
+                // 🔥 MENGGUNAKAN CARD YANG BARU
+                return VehicleCard(
+                  plate: data.plate, // Dari API: plate_text
+                  time: data.time, // Dari API: entry_time
+                  status: data.status, // Dari API: status
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
