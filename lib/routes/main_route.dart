@@ -69,18 +69,10 @@ class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(35),
             boxShadow: [
-              // 1. Glow Halus (Tetap dipertahankan)
+              // Shadow lembut agar tidak terlihat kaku
               BoxShadow(
-                color: AppColors.neonGreen.withOpacity(0.15),
-                blurRadius: 12,
-                spreadRadius: -4,
-                offset: const Offset(0, -2),
-              ),
-              // 2. Shadow Hitam Bawah
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 20,
-                spreadRadius: -2,
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 25,
                 offset: const Offset(0, 10),
               ),
             ],
@@ -88,20 +80,19 @@ class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(35),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
-                  // 🔥 PERBAIKAN DISINI:
-                  // Ubah opacity jadi 0.96 (Hampir solid).
-                  // Ini akan menutup warna biru dari tombol di belakangnya,
-                  // tapi tetap terlihat modern.
-                  color: AppColors.charcoal.withOpacity(0.96),
+                  // 🔥 WARNA BARU: Cool Silver / White-Grey 🔥
+                  // Bukan putih murni (0xFFFFFF), tapi agak abu-biru (0xFFDEE4EA)
+                  // Ini mengurangi silau tapi tetap terlihat cerah/clean.
+                  color: const Color(0xFFDEE4EA).withOpacity(0.70),
 
                   borderRadius: BorderRadius.circular(35),
                   border: Border.all(
-                    color: AppColors.neonGreen.withOpacity(0.2),
-                    width: 1.5,
+                    color: Colors.white.withOpacity(0.4), // Highlight pinggir
+                    width: 1,
                   ),
                 ),
                 child: Row(
@@ -134,26 +125,16 @@ class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
           horizontal: isActive ? 24 : 12,
         ),
         decoration: BoxDecoration(
-          // Tombol Aktif juga diberi Glow lembut
-          color:
-              isActive
-                  ? AppColors.neonGreen.withOpacity(0.15) // Hijau Pudar
-                  : Colors.transparent,
+          // Background Tombol Aktif: Putih Murni (Agar kontras dengan bar Silver)
+          color: isActive ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(30),
-          // Border tipis pada tombol aktif
-          border:
-              isActive
-                  ? Border.all(
-                    color: AppColors.neonGreen.withOpacity(0.3),
-                    width: 1,
-                  )
-                  : null,
           boxShadow:
               isActive
                   ? [
                     BoxShadow(
-                      color: AppColors.neonGreen.withOpacity(0.2),
-                      blurRadius: 15,
+                      color: AppColors.deepBlue.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
                   ]
                   : [],
@@ -163,11 +144,10 @@ class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
           children: [
             Icon(
               isActive ? item.activeIcon : item.icon,
-              color:
-                  isActive
-                      ? AppColors
-                          .neonGreen // Ikon Menyala Hijau
-                      : AppColors.softWhite.withOpacity(0.5),
+              // Warna Ikon:
+              // Aktif: DeepBlue (Biru Gelap) -> Sangat tajam di atas putih
+              // Mati: Abu-abu medium (Bukan hitam pekat, biar soft)
+              color: isActive ? AppColors.deepBlue : const Color(0xFF475569),
               size: 26,
             ),
             AnimatedSize(
@@ -182,14 +162,10 @@ class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
                     maxLines: 1,
                     overflow: TextOverflow.clip,
                     style: const TextStyle(
-                      color: AppColors.neonGreen, // Teks Menyala Hijau
-                      fontWeight: FontWeight.w700,
+                      color: AppColors.deepBlue, // Teks Deep Blue
+                      fontWeight: FontWeight.w800,
                       fontSize: 14,
                       letterSpacing: 0.5,
-                      shadows: [
-                        // Text Shadow (Glow pada huruf)
-                        Shadow(color: AppColors.neonGreen, blurRadius: 10),
-                      ],
                     ),
                   ),
                 ),
