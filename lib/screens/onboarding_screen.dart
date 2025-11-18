@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../components/button.dart';
 import '../components/dot_indicator.dart';
 import '../themes/color.dart';
-import '../main.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -63,22 +62,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Ganti ke halaman berikut (misal Login / Dashboard)
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 500),
-          pageBuilder:
-              (context, animation, secondaryAnimation) => const MyApp(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            final curved = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeInOut,
-            );
-            return FadeTransition(opacity: curved, child: child);
-          },
-        ),
-      );
+      
+      Navigator.pushReplacementNamed(context, '/main');
     }
   }
 
