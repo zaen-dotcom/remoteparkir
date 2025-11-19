@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../components/button.dart';
 import '../components/dot_indicator.dart';
 import '../themes/color.dart';
+// 👇 1. Import Session Manager
+import '../utils/session_manager.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -54,7 +56,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _nextPage() {
+  // 👇 2. Ubah function menjadi 'async'
+  Future<void> _nextPage() async {
     if (_currentPage < _onboardingData.length - 1) {
       _pageController.animateToPage(
         _currentPage + 1,
@@ -62,8 +65,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      
-      Navigator.pushReplacementNamed(context, '/main');
+      // 👇 3. Simpan status session sebelum pindah halaman
+      // Ini menandakan user sudah selesai onboarding
+      await SessionManager.setOnboardingFinished();
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/main');
+      }
     }
   }
 

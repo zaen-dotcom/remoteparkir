@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import '../themes/color.dart';
 import '../components/custom_alert.dart';
+import '../services/api_service.dart';
 
 // ----------------------------------------------------------------
 
-class ControlPage extends StatelessWidget {
+class ControlPage extends StatefulWidget {
   const ControlPage({super.key});
 
+  @override
+  State<ControlPage> createState() => _ControlPageState();
+}
+
+class _ControlPageState extends State<ControlPage> {
+  // 1. Alert Konfirmasi Awal
   void _showConfirmationAlert(BuildContext context) {
     ElegantAlertDialog.show(
       context,
@@ -15,8 +22,8 @@ class ControlPage extends StatelessWidget {
           "Anda yakin akan membuka gate jalan? Pastikan area sekitar aman.",
       confirmText: "YA, BUKA GATE",
       onConfirm: () {
-        Navigator.of(context).pop();
-        _sendOpenCommand(context);
+        Navigator.of(context).pop(); // Tutup alert konfirmasi
+        _sendOpenCommand(); // Jalankan perintah ke server
       },
       cancelText: "BATAL",
       onCancel: () {
@@ -27,17 +34,64 @@ class ControlPage extends StatelessWidget {
     );
   }
 
-  void _sendOpenCommand(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          "Perintah Buka Gate Terkirim!",
-          style: TextStyle(color: AppColors.softWhite),
-        ),
-        backgroundColor: AppColors.neonGreen,
-        duration: const Duration(seconds: 2),
-      ),
+  // 2. Fungsi Kirim Perintah (Dengan Loading Dialog)
+  Future<void> _sendOpenCommand() async {
+    // A. TAMPILKAN LOADING DIALOG (Bukan SnackBar)
+    // Loading ini akan terus muncul sampai kita tutup secara manual (pop)
+    showDialog(
+      context: context,
+      barrierDismissible: false, // User tidak bisa tutup sembarangan
+      builder: (context) {
+        return Center(
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ),
+            child: CircularProgressIndicator(color: AppColors.neonGreen),
+          ),
+        );
+      },
     );
+
+    // B. Panggil API (Proses menunggu terjadi di sini)
+    bool success = await openGateManual();
+
+    // C. Cek mounted sebelum lanjut (Safety Check)
+    if (!mounted) return;
+
+    // D. TUTUP LOADING DIALOG
+    Navigator.of(context).pop();
+
+    // E. Tampilkan Alert Hasil
+    if (success) {
+      // === KONDISI SUKSES ===
+      ElegantAlertDialog.show(
+        context,
+        title: "Berhasil",
+        content: "Perintah diterima! Gerbang sedang dibuka.",
+        confirmText: "KONFIRMASI",
+        onConfirm: () {
+          Navigator.of(context).pop();
+        },
+        icon: Icons.check_circle_outline,
+        iconColor: AppColors.neonGreen,
+      );
+    } else {
+      // === KONDISI GAGAL ===
+      ElegantAlertDialog.show(
+        context,
+        title: "Gagal Terkirim",
+        content: "Tidak dapat terhubung ke server.\nError: Connection Timeout",
+        confirmText: "MENGERTI",
+        onConfirm: () {
+          Navigator.of(context).pop();
+        },
+        icon: Icons.wifi_off_rounded,
+        iconColor: AppColors.crimson,
+      );
+    }
   }
 
   @override
@@ -58,17 +112,13 @@ class ControlPage extends StatelessWidget {
         elevation: 0,
         toolbarHeight: 70,
       ),
-      // PERBAIKAN DI SINI:
-      // Kembali menggunakan Center, lalu wrap Column dengan Transform.translate
       body: Center(
         child: Transform.translate(
-          offset: const Offset(0.0, -70), // Geser ke atas 25 pixel
+          offset: const Offset(0.0, -70),
           child: Column(
-            mainAxisSize:
-                MainAxisSize
-                    .min, // Penting agar Column tidak mengambil seluruh tinggi
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              // Informasi Status/Lokasi
+              // Indikator Status
               Text(
                 "Gerbang Utama Kompleks A",
                 style: TextStyle(
@@ -117,7 +167,7 @@ class ControlPage extends StatelessWidget {
 
               const SizedBox(height: 100),
 
-              // Instruksi Minimalis
+              // Instruksi
               Text(
                 "Ketuk untuk mengontrol gerbang.",
                 style: TextStyle(
@@ -129,13 +179,11 @@ class ControlPage extends StatelessWidget {
           ),
         ),
       ),
-      // Jika Anda memiliki BottomNavigationBar, itu harus di sini
-      // bottomNavigationBar: ...
     );
   }
 }
 
-// ... (Kode AnimatedBigButton tetap sama)
+// === WIDGET TOMBOL ANIMASI (TETAP SAMA) ===
 class AnimatedBigButton extends StatefulWidget {
   final VoidCallback onTap;
   final String label;

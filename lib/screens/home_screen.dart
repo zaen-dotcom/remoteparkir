@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../themes/color.dart';
-import '../components/card.dart'; // Pastikan ini mengarah ke VehicleCard yang baru
-import '../services/api_service.dart'; // File service API yang tadi dibuat
-import '../models/vehicle_model.dart'; // File model yang tadi dibuat
+import '../components/card.dart';
+import '../services/api_service.dart';
+import '../models/vehicle_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,17 +11,19 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  // Variabel untuk menampung Future data
+class _HomePageState extends State<HomePage>
+    with AutomaticKeepAliveClientMixin {
   late Future<List<VehicleModel>> _vehicleFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _vehicleFuture = getVehicleHistory();
   }
 
-  // Fungsi untuk memuat/refresh data
+  @override
+  bool get wantKeepAlive => true;
+
   void _loadData() {
     setState(() {
       _vehicleFuture = getVehicleHistory();
@@ -30,6 +32,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final double bottomPadding = 120.0;
 
     return Scaffold(
@@ -45,17 +49,12 @@ class _HomePageState extends State<HomePage> {
         centerTitle: false,
         backgroundColor: AppColors.charcoal,
         elevation: 0,
-        actions: [
-          // Tombol Refresh Manual (Opsional)
-          const SizedBox(width: 8),
-        ],
+        actions: [const SizedBox(width: 8)],
       ),
 
-      // RefreshIndicator: Tarik layar ke bawah untuk update data
       body: RefreshIndicator(
         onRefresh: () async {
           _loadData();
-          // Tunggu sebentar agar loading indicator terasa (UX)
           await Future.delayed(const Duration(seconds: 1));
         },
         color: AppColors.neonGreen,
@@ -90,7 +89,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     Text(
-                      "${snapshot.error}", // Tampilkan pesan error teknis (opsional)
+                      "${snapshot.error}",
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
@@ -100,8 +99,13 @@ class _HomePageState extends State<HomePage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.deepBlue,
                       ),
-                      child: const Text("Coba Lagi"),
+                      child: const Text(
+                        "Coba Lagi",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
+                    // Spacer bawah agar posisi agak naik
+                    const SizedBox(height: 100),
                   ],
                 ),
               );
@@ -125,6 +129,21 @@ class _HomePageState extends State<HomePage> {
                         color: AppColors.softWhite.withOpacity(0.5),
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    // Tombol refresh manual
+                    ElevatedButton(
+                      onPressed: _loadData,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.deepBlue,
+                      ),
+                      child: const Text(
+                        "Refresh",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    // 🔥 UPDATE DISINI: Menambahkan Spacer Bawah
+                    // Ini akan mendorong konten ikon & teks ke atas
+                    const SizedBox(height: 150),
                   ],
                 ),
               );
@@ -134,16 +153,15 @@ class _HomePageState extends State<HomePage> {
             final vehicles = snapshot.data!;
 
             return ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.fromLTRB(20, 10, 20, bottomPadding),
               itemCount: vehicles.length,
               itemBuilder: (context, index) {
                 final data = vehicles[index];
-
-                // 🔥 MENGGUNAKAN CARD YANG BARU
                 return VehicleCard(
-                  plate: data.plate, // Dari API: plate_text
-                  time: data.time, // Dari API: entry_time
-                  status: data.status, // Dari API: status
+                  plate: data.plate,
+                  time: data.time,
+                  status: data.status,
                 );
               },
             );

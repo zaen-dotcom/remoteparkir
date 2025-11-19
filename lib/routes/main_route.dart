@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../themes/color.dart';
+import 'package:flutter/services.dart';
 import '../screens/home_screen.dart';
 import '../screens/controll_screen.dart';
 
@@ -11,9 +11,8 @@ class MainRoute extends StatefulWidget {
   State<MainRoute> createState() => _MainRouteState();
 }
 
-class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
+class _MainRouteState extends State<MainRoute> {
   int _selectedIndex = 0;
-  late PageController _pageController;
 
   final List<Widget> _pages = const [HomePage(), ControlPage()];
 
@@ -30,68 +29,79 @@ class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
     ),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: _selectedIndex);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
-    setState(() => _selectedIndex = index);
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutQuart,
-    );
+    HapticFeedback.lightImpact();
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.charcoal,
+      backgroundColor: const Color(0xFF0F131F),
       extendBody: true,
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: _pages,
+
+      // Tetap gunakan AnimatedSwitcher agar tidak macet/freeze
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        switchInCurve: Curves.easeOutExpo,
+        switchOutCurve: Curves.easeInExpo,
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.05),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey<int>(_selectedIndex),
+          child: _pages[_selectedIndex],
+        ),
       ),
+
       bottomNavigationBar: SafeArea(
         child: Container(
-          margin: const EdgeInsets.fromLTRB(24, 0, 24, 30),
-          height: 75,
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+          height: 80,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(35),
+            borderRadius: BorderRadius.circular(40),
             boxShadow: [
-              // Shadow lembut agar tidak terlihat kaku
+              // 🔥 PERBAIKAN SHADOW DISINI 🔥
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
-                blurRadius: 25,
-                offset: const Offset(0, 10),
+                color: Colors.black.withOpacity(
+                  0.3,
+                ), // Opacity dikurangi biar soft
+                blurRadius: 10, // Dikecilkan drastis (dari 30 jadi 10)
+                offset: const Offset(0, 4), // Didekatkan (dari 10 jadi 4)
+                spreadRadius: 0, // Agar tidak melebar kemana-mana
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(35),
+            borderRadius: BorderRadius.circular(40),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 decoration: BoxDecoration(
-                  // 🔥 WARNA BARU: Cool Silver / White-Grey 🔥
-                  // Bukan putih murni (0xFFFFFF), tapi agak abu-biru (0xFFDEE4EA)
-                  // Ini mengurangi silau tapi tetap terlihat cerah/clean.
-                  color: const Color(0xFFDEE4EA).withOpacity(0.70),
-
-                  borderRadius: BorderRadius.circular(35),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF1A1F35).withOpacity(0.85),
+                      const Color(0xFF121520).withOpacity(0.95),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(40),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.4), // Highlight pinggir
+                    color: Colors.white.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
@@ -122,19 +132,27 @@ class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
         curve: Curves.easeOutQuart,
         padding: EdgeInsets.symmetric(
           vertical: 12,
-          horizontal: isActive ? 24 : 12,
+          horizontal: isActive ? 20 : 12,
         ),
         decoration: BoxDecoration(
-          // Background Tombol Aktif: Putih Murni (Agar kontras dengan bar Silver)
-          color: isActive ? Colors.white : Colors.transparent,
+          gradient:
+              isActive
+                  ? const LinearGradient(
+                    colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                  : null,
+          color: isActive ? null : Colors.transparent,
           borderRadius: BorderRadius.circular(30),
+          // Shadow tombol biru kecil (sudah pas sebelumnya)
           boxShadow:
               isActive
                   ? [
                     BoxShadow(
-                      color: AppColors.deepBlue.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: const Color(0xFF00C6FF).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ]
                   : [],
@@ -144,11 +162,8 @@ class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
           children: [
             Icon(
               isActive ? item.activeIcon : item.icon,
-              // Warna Ikon:
-              // Aktif: DeepBlue (Biru Gelap) -> Sangat tajam di atas putih
-              // Mati: Abu-abu medium (Bukan hitam pekat, biar soft)
-              color: isActive ? AppColors.deepBlue : const Color(0xFF475569),
-              size: 26,
+              color: isActive ? Colors.white : const Color(0xFF8F9BB3),
+              size: 24,
             ),
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
@@ -156,16 +171,18 @@ class _MainRouteState extends State<MainRoute> with TickerProviderStateMixin {
               child: SizedBox(
                 width: isActive ? null : 0,
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 10),
-                  child: Text(
-                    item.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.clip,
-                    style: const TextStyle(
-                      color: AppColors.deepBlue, // Teks Deep Blue
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                      letterSpacing: 0.5,
+                  padding: const EdgeInsets.only(left: 8),
+                  child: ClipRect(
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.clip,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
