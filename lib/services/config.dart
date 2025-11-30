@@ -11,6 +11,7 @@ class ApiConfig {
   // Endpoint list (ubah jadi getter juga agar mengikuti baseUrl terbaru)
   static String get vehicleHistory => "$baseUrl/api/vehicle";
   static String get openGate => "$baseUrl/api/open-gate";
+  static String get stopBuzzer => "$baseUrl/api/stop-buzzer";
 
   // --- LOGIKA PENYIMPANAN ---
 
