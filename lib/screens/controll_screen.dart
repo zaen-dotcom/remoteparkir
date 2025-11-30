@@ -120,7 +120,7 @@ class _ControlPageState extends State<ControlPage> {
             children: <Widget>[
               // Indikator Status
               Text(
-                "Gerbang Utama Kompleks A",
+                "Gate Utama",
                 style: TextStyle(
                   color: titleColor.withOpacity(0.7),
                   fontSize: 18,

@@ -1,0 +1,15 @@
+flutter_native_splash:
+  android: false
+  ios: true
+  web: false
+
+  background_image: "assets/bg.png"
+  image: "assets/poco.png"
+
+  android_12:
+    background_image: "assets/bg.png"
+    image: "assets/poco.png"
+
+  android_16:
+    background_image: "assets/bg.png"
+    image: "assets/poco.png"

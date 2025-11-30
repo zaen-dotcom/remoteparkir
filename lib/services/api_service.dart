@@ -30,7 +30,7 @@ Future<List<VehicleModel>> getVehicleHistory() async {
 // === FUNGSI BUKA GATE MANUAL ===
 Future<bool> openGateManual() async {
   try {
-    const String url = ApiConfig.openGate;
+    final String url = ApiConfig.openGate;
 
     print("📡 Sending Command to: $url");
 
